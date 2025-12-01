@@ -17,7 +17,7 @@ A Django REST API that:
 ## Project Setup
 
 ```powershell
-cd G:\Django_Developer_Remote
+cd path\to\fuel-planner-api   # switch into the directory where you cloned this repo
 py -3.12 -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements-dev.txt
