@@ -26,15 +26,17 @@ ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS")
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
 
-# Render sets this on every web service, so its own host needs no copying
-if render_host := os.environ.get("RENDER_EXTERNAL_HOSTNAME"):
-    ALLOWED_HOSTS.append(render_host)
-    CSRF_TRUSTED_ORIGINS.append(f"https://{render_host}")
+# Render and Koyeb set these on every web service, so their own host needs
+# no copying
+for name in ("RENDER_EXTERNAL_HOSTNAME", "KOYEB_PUBLIC_DOMAIN"):
+    if host := os.environ.get(name):
+        ALLOWED_HOSTS.append(host)
+        CSRF_TRUSTED_ORIGINS.append(f"https://{host}")
 
 # HTTPS-only settings, on by default outside DEBUG. Docker Compose turns them
 # off because it serves production settings over plain http on localhost.
 if os.environ.get("DJANGO_SECURE", "0" if DEBUG else "1") == "1":
-    # Render ends TLS at its proxy and forwards plain http with this header.
+    # the host ends TLS at its proxy and forwards plain http with this header
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = True
     # its health check and the request that wakes a sleeping instance are http
@@ -43,7 +45,7 @@ if os.environ.get("DJANGO_SECURE", "0" if DEBUG else "1") == "1":
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    # preload is for a domain we own; onrender.com isn't ours
+    # preload is for a domain we own; onrender.com and koyeb.app aren't ours
     SILENCED_SYSTEM_CHECKS = ["security.W021"]
 
 INSTALLED_APPS = [

@@ -157,3 +157,22 @@ def test_postgres_connect_timeout():
         text=True,
     )
     assert "'connect_timeout': 10" in result.stdout, result.stdout + result.stderr
+
+
+def test_koyeb_domain_is_trusted():
+    # Koyeb's counterpart of RENDER_EXTERNAL_HOSTNAME
+    code = (
+        "import django; django.setup(); from django.conf import settings; "
+        "print(settings.ALLOWED_HOSTS, settings.CSRF_TRUSTED_ORIGINS)"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=API,
+        env=settings_env(
+            DJANGO_SECRET_KEY="x" * 50, KOYEB_PUBLIC_DOMAIN="fuel-planner-tahmid-ab12.koyeb.app"
+        ),
+        capture_output=True,
+        text=True,
+    )
+    assert "'fuel-planner-tahmid-ab12.koyeb.app'" in result.stdout, result.stderr
+    assert "'https://fuel-planner-tahmid-ab12.koyeb.app'" in result.stdout
