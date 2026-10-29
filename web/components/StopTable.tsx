@@ -40,7 +40,16 @@ export default function StopTable({ part }: { part: PlanPart }) {
       title: "Detour",
       key: "detour",
       responsive: ["md"],
-      render: (_, s) => num(`${milesExact(s.detour_mi)}, ${gallons(s.detour_gal)} there and back`),
+      render: (_, s) => (
+        <>
+          {num(milesExact(s.detour_mi))}
+          <div>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              {gallons(s.detour_gal)} there and back
+            </Typography.Text>
+          </div>
+        </>
+      ),
     },
   ];
 

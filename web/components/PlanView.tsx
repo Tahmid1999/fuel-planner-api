@@ -54,7 +54,7 @@ export default function PlanView({ doc }: { doc: PlanDocument }) {
       </Text>
 
       <Row gutter={[12, 12]}>
-        <Col xs={24} md={12}>
+        <Col xs={24} lg={10}>
           <RouteMap
             route={doc.route.geometry.coordinates}
             stops={plan.stops}
@@ -62,7 +62,7 @@ export default function PlanView({ doc }: { doc: PlanDocument }) {
             to={doc.to}
           />
         </Col>
-        <Col xs={24} md={12}>
+        <Col xs={24} lg={14}>
           <Space direction="vertical" size={12} style={{ width: "100%" }}>
             {plan.stops.length ? (
               <StopTable part={plan} />

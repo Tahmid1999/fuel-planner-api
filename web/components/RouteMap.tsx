@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react";
 import type { Place, Stop } from "@/lib/api";
 import { routeBounds, stopsGeoJSON } from "@/lib/geo";
 
-// Free, no key, no request limit; MapLibre shows the attribution it asks for.
+// Free, no key, no request limit; it asks for the credit line below.
 const STYLE = "https://tiles.openfreemap.org/styles/liberty";
 const BLUE = "#1677ff";
 
@@ -19,13 +19,16 @@ export default function RouteMap({ route, stops, from, to }: Props) {
     const map = new maplibregl.Map({
       container: box.current!,
       style: STYLE,
+      // The credit goes under the map instead: on a phone MapLibre's box
+      // opens over the bottom of the map, where the start pin usually is.
       attributionControl: false,
       cooperativeGestures: true, // one finger scrolls the page on a phone, two move the map
     });
-    map.addControl(new maplibregl.AttributionControl({ compact: true }));
     map.fitBounds(routeBounds(route), { padding: 32, animate: false });
 
-    map.on("load", () => {
+    // "load" waits for every tile; one slow or failed tile would keep the
+    // route off the map, so draw as soon as the style is ready.
+    map.on("style.load", () => {
       map.addSource("route", {
         type: "geojson",
         data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: route } },
@@ -76,5 +79,14 @@ export default function RouteMap({ route, stops, from, to }: Props) {
     return () => map.remove();
   }, [route, stops, from, to]);
 
-  return <div ref={box} className="route-map" />;
+  return (
+    <>
+      <div ref={box} className="route-map" />
+      <div className="map-credit">
+        <a href="https://openfreemap.org">OpenFreeMap</a> ©{" "}
+        <a href="https://www.openmaptiles.org/">OpenMapTiles</a> Data from{" "}
+        <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>
+      </div>
+    </>
+  );
 }

@@ -1,6 +1,15 @@
 body {
   margin: 0;
   background: #f5f5f5;
+  /* antd's own stack, so plain elements outside its components match */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  font-size: 14px;
+}
+
+a {
+  color: #1677ff;
+  text-decoration: none;
 }
 
 main {
@@ -13,6 +22,7 @@ main {
 .num {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .route-map {
@@ -22,8 +32,21 @@ main {
 
 @media (min-width: 768px) {
   .route-map {
+    height: 420px;
+  }
+}
+
+@media (min-width: 992px) {
+  .route-map {
     height: 520px;
   }
+}
+
+.map-credit {
+  font-size: 11px;
+  color: #8c8c8c;
+  text-align: right;
+  margin-top: 2px;
 }
 
 .pin {

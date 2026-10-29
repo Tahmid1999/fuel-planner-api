@@ -8,7 +8,8 @@ import RouteMap from "./RouteMap";
 
 jest.mock("maplibre-gl", () => {
   const map = {
-    on: jest.fn((event: string, cb: () => void) => event === "load" && cb()),
+    // layers go on as soon as the style is ready, not after every tile has loaded
+    on: jest.fn((event: string, cb: () => void) => event === "style.load" && cb()),
     addSource: jest.fn(),
     addLayer: jest.fn(),
     addControl: jest.fn(),
@@ -25,7 +26,7 @@ jest.mock("maplibre-gl", () => {
   }
   return {
     __esModule: true,
-    default: { Map: jest.fn(() => map), Marker, AttributionControl: jest.fn() },
+    default: { Map: jest.fn(() => map), Marker },
   };
 });
 
@@ -70,4 +71,15 @@ it("fits the route bounds", () => {
 it("removes the map on unmount", () => {
   draw().unmount();
   expect(map().remove).toHaveBeenCalled();
+});
+
+it("credits the map data under the map, not over the start pin", () => {
+  const { getByRole } = draw();
+  expect(getByRole("link", { name: "OpenStreetMap" })).toHaveAttribute(
+    "href",
+    "https://www.openstreetmap.org/copyright",
+  );
+  const options = (maplibregl.Map as unknown as jest.Mock).mock.calls[0][0];
+  expect(options.attributionControl).toBe(false);
+  expect(map().addControl).not.toHaveBeenCalled();
 });
