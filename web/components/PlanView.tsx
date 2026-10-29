@@ -1,6 +1,7 @@
 "use client";
 
-import { Button, Collapse, Space, Typography } from "antd";
+import { Button, Col, Collapse, Row, Space, Typography } from "antd";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -10,6 +11,12 @@ import { asOf, duration, miles, money } from "@/lib/format";
 import StopTable from "./StopTable";
 
 const { Text } = Typography;
+
+// MapLibre needs the browser (WebGL), so it never renders on the server.
+const RouteMap = dynamic(() => import("./RouteMap"), {
+  ssr: false,
+  loading: () => <div className="route-map" />,
+});
 
 function stopCount(n: number) {
   return n === 1 ? "1 stop" : `${n} stops`;
@@ -46,22 +53,35 @@ export default function PlanView({ doc }: { doc: PlanDocument }) {
           : "Same as filling up at a quarter tank"}
       </Text>
 
-      {plan.stops.length ? (
-        <StopTable part={plan} />
-      ) : (
-        <Text>No stop needed: the tank covers the trip.</Text>
-      )}
-
-      <Collapse
-        size="small"
-        items={[
-          {
-            key: "habit",
-            label: `Quarter-tank habit: ${stopCount(baseline.stops.length)}, ${money(baseline.cost)}`,
-            children: <StopTable part={baseline} />,
-          },
-        ]}
-      />
+      <Row gutter={[12, 12]}>
+        <Col xs={24} md={12}>
+          <RouteMap
+            route={doc.route.geometry.coordinates}
+            stops={plan.stops}
+            from={doc.from}
+            to={doc.to}
+          />
+        </Col>
+        <Col xs={24} md={12}>
+          <Space direction="vertical" size={12} style={{ width: "100%" }}>
+            {plan.stops.length ? (
+              <StopTable part={plan} />
+            ) : (
+              <Text>No stop needed: the tank covers the trip.</Text>
+            )}
+            <Collapse
+              size="small"
+              items={[
+                {
+                  key: "habit",
+                  label: `Quarter-tank habit: ${stopCount(baseline.stops.length)}, ${money(baseline.cost)}`,
+                  children: <StopTable part={baseline} />,
+                },
+              ]}
+            />
+          </Space>
+        </Col>
+      </Row>
 
       <Text type="secondary" style={{ fontSize: 12 }}>
         {`Prices: ${doc.prices.source}, as of ${asOf(doc.prices.as_of)} · Truck ${i.mpg} mpg, ${i.tank_gal} gal, ${i.start_pct}% at start, ${i.reserve_pct}% reserve, stations within ${i.max_detour_mi} mi`}

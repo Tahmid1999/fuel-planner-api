@@ -14,3 +14,25 @@ main {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-variant-numeric: tabular-nums;
 }
+
+.route-map {
+  height: 320px;
+  border: 1px solid #d9d9d9;
+}
+
+@media (min-width: 768px) {
+  .route-map {
+    height: 520px;
+  }
+}
+
+.pin {
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  font: bold 11px/20px sans-serif;
+  color: #fff;
+  background: #262626;
+  border-radius: 50%;
+}

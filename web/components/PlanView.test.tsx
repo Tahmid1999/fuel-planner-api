@@ -6,6 +6,12 @@ import fixture from "@/test/fixtures/austin-chicago.json";
 
 import PlanView from "./PlanView";
 
+// next/dynamic loads the map asynchronously; the map has its own tests
+jest.mock("next/dynamic", () => () => {
+  const FakeMap = () => <div data-testid="map" />;
+  return FakeMap;
+});
+
 const doc = fixture as unknown as PlanDocument;
 
 it("summary line", () => {

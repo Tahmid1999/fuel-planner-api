@@ -89,11 +89,12 @@ export default function PlanForm({ initial }: { initial?: Initial }) {
       initialValues={initial ? { ...initial.inputs, from: initial.from, to: initial.to } : DEFAULT_INPUTS}
       onFinish={submit}
       // every edit clears that field's old error
-      onValuesChange={(changed) =>
-        form.setFields(
-          Object.keys(changed).map((name) => ({ name: name as keyof Values, errors: [] })),
-        )
-      }
+      onValuesChange={(changed) => {
+        const stale = (Object.keys(changed) as (keyof Values)[]).filter(
+          (name) => form.getFieldError(name).length,
+        );
+        if (stale.length) form.setFields(stale.map((name) => ({ name, errors: [] })));
+      }}
     >
       <Row gutter={12}>
         <Col xs={24} sm={12}>
