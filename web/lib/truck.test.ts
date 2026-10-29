@@ -16,7 +16,14 @@ it("start at or below reserve fails on start_pct", () => {
 
 it("reserve too small for the detour", () => {
   const errors = checkInputs({ ...DEFAULT_INPUTS, mpg: 3, reserve_pct: 0, max_detour_mi: 10 });
-  expect(errors.reserve_pct).toContain("6.7 gal");
+  // 6.67 gal of a 150 gal tank is 4.44%; the message rounds up so the
+  // number it gives actually passes
+  expect(errors.reserve_pct).toBe("at least 4.5% for a 10 mi detour");
+  expect(checkInputs({ ...DEFAULT_INPUTS, mpg: 3, reserve_pct: 4.5, max_detour_mi: 10 })).toEqual({});
+});
+
+it("reserve just under 50 is allowed, like the api", () => {
+  expect(checkInputs({ ...DEFAULT_INPUTS, start_pct: 100, reserve_pct: 49.9995 })).toEqual({});
 });
 
 it("nan fails", () => {

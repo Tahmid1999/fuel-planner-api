@@ -19,12 +19,14 @@ export function checkInputs(i: PlanInputs) {
   if (!within(i.mpg, 3, 15)) errors.mpg = "between 3 and 15";
   if (!within(i.tank_gal, 20, 400)) errors.tank_gal = "between 20 and 400 gallons";
   if (!within(i.max_detour_mi, 0, 10)) errors.max_detour_mi = "0 to 10 miles";
-  if (!within(i.reserve_pct, 0, 49.999)) {
-    errors.reserve_pct = "0 to 49";
+  if (!(Number.isFinite(i.reserve_pct) && i.reserve_pct >= 0 && i.reserve_pct < 50)) {
+    errors.reserve_pct = "0 to under 50";
   } else if (!errors.mpg && !errors.tank_gal && !errors.max_detour_mi) {
-    const needed = (2 * i.max_detour_mi) / i.mpg;
-    if ((i.tank_gal * i.reserve_pct) / 100 < needed) {
-      errors.reserve_pct = `keep at least ${needed.toFixed(1)} gal for a ${i.max_detour_mi} mi detour`;
+    const neededGal = (2 * i.max_detour_mi) / i.mpg;
+    if ((i.tank_gal * i.reserve_pct) / 100 < neededGal) {
+      // in the field's unit, rounded up so the number shown is enough
+      const pct = Math.ceil((neededGal / i.tank_gal) * 1000) / 10;
+      errors.reserve_pct = `at least ${pct}% for a ${i.max_detour_mi} mi detour`;
     }
   }
   if (!within(i.start_pct, 0, 100) || (!errors.reserve_pct && i.start_pct <= i.reserve_pct)) {
