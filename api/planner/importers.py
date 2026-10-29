@@ -164,6 +164,26 @@ def import_cities(country):
             )
         )
 
+    return _upsert_cities(cities)
+
+
+def load_cities_csv(fileobj, country):
+    """Cities from the file export_cities writes (name,state,lat,lng,population)."""
+    cities = [
+        City(
+            country=country,
+            name=row["name"],
+            state=row["state"],
+            lat=float(row["lat"]),
+            lng=float(row["lng"]),
+            population=int(row["population"]),
+        )
+        for row in csv.DictReader(fileobj)
+    ]
+    return _upsert_cities(cities)
+
+
+def _upsert_cities(cities):
     City.objects.bulk_create(
         cities,
         batch_size=1000,

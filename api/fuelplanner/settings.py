@@ -114,6 +114,10 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# What seed_demo loads into an empty database (Render's free plan has no shell).
+SEED_CITIES = BASE_DIR / "planner" / "fixtures" / "us_cities.csv.gz"
+SEED_PRICES = BASE_DIR / "planner" / "fixtures" / "sample_prices.csv"
+
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
