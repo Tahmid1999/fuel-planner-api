@@ -1,3 +1,4 @@
+from django.db import OperationalError, connection
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
@@ -18,6 +19,19 @@ from .serializers import (
 from .trips import NoPrices, make_plan, plan_document
 
 NO_PRICES = {"detail": "no prices loaded"}
+
+
+class HealthView(APIView):
+    # for Render's health check and the smoke test; touches the database so a
+    # suspended Postgres shows up here
+    @extend_schema(exclude=True)
+    def get(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("select 1")
+        except OperationalError:
+            return Response({"ok": False, "db": False}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        return Response({"ok": True, "db": True})
 
 
 class CitySearchView(APIView):
