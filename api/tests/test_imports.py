@@ -12,23 +12,6 @@ from planner.models import City, Country, PriceList, Station, StationPrice
 pytestmark = pytest.mark.django_db
 
 SMALL = Path(__file__).parent / "fixtures" / "prices_small.csv"
-CITIES = [
-    ("Big Cabin", "OK"),
-    ("Tomah", "WI"),
-    ("Gila Bend", "AZ"),
-    ("Fort Smith", "AR"),
-    ("Columbia", "NJ"),
-    ("Mount Jackson", "VA"),
-    ("Jarrell", "TX"),
-]
-
-
-@pytest.fixture
-def us():
-    country = Country.objects.get(code="US")
-    for i, (name, state) in enumerate(CITIES):
-        City.objects.create(country=country, name=name, state=state, lat=30 + i, lng=-90 - i)
-    return country
 
 
 def load(us, as_of=dt.date(2025, 11, 28), activate=True):
