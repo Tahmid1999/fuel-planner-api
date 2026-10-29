@@ -40,3 +40,85 @@ class PlanRequestSerializer(serializers.Serializer):
     def inputs(self):
         names = ["mpg", "tank_gal", "start_pct", "reserve_pct", "max_detour_mi"]
         return {name: float(self.validated_data[name]) for name in names}
+
+
+# The classes below only describe responses for the OpenAPI schema; the views
+# build the dicts themselves (see trips.plan_document).
+
+
+class DetailSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+
+
+class ActivePricesSerializer(serializers.Serializer):
+    source = serializers.CharField()
+    as_of = serializers.DateField()
+    station_count = serializers.IntegerField()
+
+
+class PlaceSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    label = serializers.CharField()
+    lat = serializers.FloatField()
+    lng = serializers.FloatField()
+
+
+class StopSerializer(serializers.Serializer):
+    opis_id = serializers.CharField()
+    name = serializers.CharField()
+    address = serializers.CharField()
+    city = serializers.CharField()
+    state = serializers.CharField()
+    lat = serializers.FloatField()
+    lng = serializers.FloatField()
+    mile = serializers.FloatField()
+    detour_mi = serializers.FloatField(help_text="Off the route, one way.")
+    detour_gal = serializers.FloatField(help_text="Fuel for the detour there and back.")
+    price = serializers.FloatField()
+    gallons = serializers.FloatField()
+    cost = serializers.FloatField()
+
+
+class PlanPartSerializer(serializers.Serializer):
+    stops = StopSerializer(many=True)
+    spend = serializers.FloatField()
+    leftover_value = serializers.FloatField(help_text="What the fuel left on arrival cost.")
+    cost = serializers.FloatField(help_text="spend - leftover_value")
+    gallons = serializers.FloatField()
+
+
+class RouteSerializer(serializers.Serializer):
+    distance_mi = serializers.FloatField()
+    duration_min = serializers.IntegerField()
+    geometry = serializers.JSONField(help_text="GeoJSON LineString, [lng, lat] pairs.")
+
+
+class PricesUsedSerializer(serializers.Serializer):
+    source = serializers.CharField()
+    as_of = serializers.DateField()
+
+
+class InputsSerializer(serializers.Serializer):
+    mpg = serializers.FloatField()
+    tank_gal = serializers.FloatField()
+    start_pct = serializers.FloatField()
+    reserve_pct = serializers.FloatField()
+    max_detour_mi = serializers.FloatField()
+
+
+class PlanDocumentSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    created_at = serializers.DateTimeField()
+    from_ = PlaceSerializer()
+    to = PlaceSerializer()
+    inputs = InputsSerializer()
+    prices = PricesUsedSerializer()
+    route = RouteSerializer()
+    plan = PlanPartSerializer(help_text="The cheapest plan.")
+    baseline = PlanPartSerializer(help_text="Fill to full when a leg would leave under 25%.")
+    savings = serializers.FloatField(help_text="baseline.cost - plan.cost")
+
+    def get_fields(self):
+        fields = super().get_fields()
+        fields["from"] = fields.pop("from_")
+        return fields

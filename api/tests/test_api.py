@@ -238,3 +238,16 @@ def test_city_search_short_query_empty(client):
     City.objects.create(country=us, name="Chicago", state="IL", lat=41, lng=-87)
     assert client.get("/api/cities/?q=c").json() == []
     assert client.get("/api/cities/").json() == []
+
+
+def test_schema_and_docs_load(client):
+    schema = client.get("/api/schema/")
+    assert schema.status_code == 200
+    assert b"/api/plans/" in schema.content
+    assert client.get("/api/docs/").status_code == 200
+
+
+def test_schema_has_no_warnings(tmp_path):
+    from django.core.management import call_command
+
+    call_command("spectacular", "--file", str(tmp_path / "s.yml"), "--validate", "--fail-on-warn")

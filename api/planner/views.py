@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -7,13 +8,23 @@ from .fuel import Unreachable
 from .importers import active_price_list
 from .models import City, TripPlan
 from .routing import RoutingUnavailable
-from .serializers import CitySerializer, PlanRequestSerializer
+from .serializers import (
+    ActivePricesSerializer,
+    CitySerializer,
+    DetailSerializer,
+    PlanDocumentSerializer,
+    PlanRequestSerializer,
+)
 from .trips import NoPrices, make_plan, plan_document
 
 NO_PRICES = {"detail": "no prices loaded"}
 
 
 class CitySearchView(APIView):
+    @extend_schema(
+        parameters=[OpenApiParameter("q", str, description="Start of the name, 2+ characters")],
+        responses=CitySerializer(many=True),
+    )
     def get(self, request):
         q = request.query_params.get("q", "").strip()
         if len(q) < 2:
@@ -25,6 +36,7 @@ class CitySearchView(APIView):
 
 
 class ActivePricesView(APIView):
+    @extend_schema(responses={200: ActivePricesSerializer, 503: DetailSerializer})
     def get(self, request):
         price_list = active_price_list("US")
         if price_list is None:
@@ -39,6 +51,16 @@ class ActivePricesView(APIView):
 
 
 class PlanCreateView(APIView):
+    @extend_schema(
+        request=PlanRequestSerializer,
+        responses={
+            201: PlanDocumentSerializer,
+            400: None,
+            422: DetailSerializer,
+            502: DetailSerializer,
+            503: DetailSerializer,
+        },
+    )
     def post(self, request):
         form = PlanRequestSerializer(data=request.data)
         form.is_valid(raise_exception=True)
@@ -68,6 +90,7 @@ class PlanCreateView(APIView):
 
 
 class PlanDetailView(APIView):
+    @extend_schema(responses={200: PlanDocumentSerializer, 404: DetailSerializer})
     def get(self, request, plan_id):
         trip = get_object_or_404(
             TripPlan.objects.select_related("from_city", "to_city"), pk=plan_id
