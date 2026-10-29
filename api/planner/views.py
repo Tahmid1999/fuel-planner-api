@@ -21,6 +21,14 @@ from .trips import NoPrices, make_plan, plan_document
 NO_PRICES = {"detail": "no prices loaded"}
 
 
+class LiveView(APIView):
+    # Render's health check: answers while the process is up, database or not,
+    # so a Neon outage gives 503s from the API instead of a restart loop
+    @extend_schema(exclude=True)
+    def get(self, request):
+        return Response({"ok": True})
+
+
 class HealthView(APIView):
     # for Render's health check and the smoke test; touches the database so a
     # suspended Postgres shows up here

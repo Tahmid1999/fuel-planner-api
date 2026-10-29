@@ -38,7 +38,7 @@ if os.environ.get("DJANGO_SECURE", "0" if DEBUG else "1") == "1":
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = True
     # its health check and the request that wakes a sleeping instance are http
-    SECURE_REDIRECT_EXEMPT = [r"^api/health/$"]
+    SECURE_REDIRECT_EXEMPT = [r"^api/health/$", r"^api/live/$"]
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
@@ -96,6 +96,10 @@ DATABASES = {
         conn_max_age=60,
     )
 }
+if DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
+    # libpq waits forever by default; a hung Neon host should turn into a quick
+    # 503 rather than a worker killed by gunicorn's timeout
+    DATABASES["default"].setdefault("OPTIONS", {})["connect_timeout"] = 10
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

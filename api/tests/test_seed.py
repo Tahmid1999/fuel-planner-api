@@ -59,3 +59,23 @@ def test_export_then_load_round_trips(tmp_path):
     with gzip.open(out, "rt", encoding="utf-8") as f:
         assert load_cities_csv(f, us) == 2
     assert sorted(City.objects.values_list("name", "state", "lat", "lng", "population")) == before
+
+
+@small_seed
+def test_prepare_db_migrates_and_seeds():
+    out = StringIO()
+    call_command("prepare_db", stdout=out)
+    assert City.objects.count() == 7
+    assert "8 prices" in out.getvalue()
+
+
+def test_prepare_db_survives_an_unreachable_database(monkeypatch):
+    from django.db import OperationalError
+
+    def down(*args, **kwargs):
+        raise OperationalError("could not connect to server: Connection timed out")
+
+    monkeypatch.setattr("planner.management.commands.prepare_db.call_command", down)
+    out = StringIO()
+    call_command("prepare_db", stdout=out)  # must not raise: gunicorn starts next
+    assert "database not reachable" in out.getvalue()
