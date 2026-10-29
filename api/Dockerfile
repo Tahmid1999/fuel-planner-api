@@ -11,6 +11,12 @@ RUN pip install -r requirements.txt
 
 COPY . /app
 
+# collectstatic only needs settings to load; this key never leaves the layer
+RUN DJANGO_SECRET_KEY=collectstatic-only python manage.py collectstatic --noinput
+
+RUN useradd --create-home app
+USER app
+
 EXPOSE 8000
 
-CMD ["gunicorn", "fuelplanner.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["sh", "start.sh"]

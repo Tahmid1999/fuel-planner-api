@@ -121,3 +121,26 @@ def test_no_route_is_not_a_server_outage(calls, pair):
     with pytest.raises(NoRoute):
         get_route(*pair)
     assert RouteCache.objects.count() == 0
+
+
+def test_concurrent_first_requests_do_not_500(calls, pair, monkeypatch):
+    start, end = pair
+    real_fetch = routing._fetch
+
+    def fetch_while_another_request_saves(a, b):
+        route = real_fetch(a, b)
+        # the other request finished first and stored the same pair
+        RouteCache.objects.create(
+            from_city=a,
+            to_city=b,
+            geometry=[list(p) for p in route.geometry],
+            distance_mi=route.distance_mi,
+            duration_min=route.duration_min,
+        )
+        return route
+
+    monkeypatch.setattr(routing, "_fetch", fetch_while_another_request_saves)
+    route = get_route(start, end)
+    assert RouteCache.objects.count() == 1
+    stored = RouteCache.objects.get()
+    assert route.distance_mi == stored.distance_mi

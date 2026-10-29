@@ -5,6 +5,7 @@ dj-database-url==2.3.0
 django-cors-headers==4.6.0
 psycopg[binary]==3.2.3
 gunicorn==23.0.0
+whitenoise==6.8.2
 requests==2.32.3
 pyproj==3.6.1
 shapely==2.0.4

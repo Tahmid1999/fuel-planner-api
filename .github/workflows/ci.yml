@@ -56,3 +56,16 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build --wait
+      - run: curl -fsS http://localhost:8000/api/health/
+      - run: curl -fsS http://localhost:8000/api/prices/active/ | grep -q '"station_count":6622'
+      - run: curl -fsS -o /dev/null http://localhost:8000/static/admin/css/base.css
+      - run: curl -fsS http://localhost:3300 | grep -q "Fuel planner"
+      - run: docker compose logs api | grep -q "6622 prices"
+      - if: failure()
+        run: docker compose logs

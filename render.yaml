@@ -1,0 +1,19 @@
+# Render blueprint for the API: New > Blueprint > this repo. The database is
+# on Neon; paste its connection string into DATABASE_URL when Render asks.
+services:
+  - type: web
+    name: fuel-planner-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerContext: ./api
+    dockerfilePath: ./api/Dockerfile
+    # liveness only; /api/health/ also checks the database
+    healthCheckPath: /api/live/
+    autoDeploy: true
+    branch: main
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false

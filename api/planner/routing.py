@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 import requests
+from django.db import IntegrityError, transaction
 from shapely import LineString
 
 from .models import RouteCache
@@ -37,13 +38,21 @@ def get_route(from_city, to_city):
         )
 
     route = _fetch(from_city, to_city)
-    RouteCache.objects.create(
-        from_city=from_city,
-        to_city=to_city,
-        geometry=[list(p) for p in route.geometry],
-        distance_mi=route.distance_mi,
-        duration_min=route.duration_min,
-    )
+    try:
+        with transaction.atomic():
+            RouteCache.objects.create(
+                from_city=from_city,
+                to_city=to_city,
+                geometry=[list(p) for p in route.geometry],
+                distance_mi=route.distance_mi,
+                duration_min=route.duration_min,
+            )
+    except IntegrityError:
+        # another request for the same pair saved its route first; use that one
+        winner = RouteCache.objects.get(from_city=from_city, to_city=to_city)
+        return RouteData(
+            [tuple(p) for p in winner.geometry], winner.distance_mi, winner.duration_min
+        )
     return route
 
 
