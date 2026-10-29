@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib import admin, messages
 
-from .importers import import_prices
+from .importers import import_prices, read_price_rows
 from .models import City, PriceList, Station
 
 
@@ -11,6 +11,15 @@ class PriceUploadForm(forms.ModelForm):
     class Meta:
         model = PriceList
         fields = ["country", "source", "as_of"]
+
+    def clean_file(self):
+        upload = self.cleaned_data["file"]
+        try:
+            read_price_rows(upload)
+        except ValueError as exc:
+            raise forms.ValidationError(str(exc)) from exc
+        upload.seek(0)
+        return upload
 
 
 @admin.register(PriceList)

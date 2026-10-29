@@ -2,7 +2,7 @@ import csv
 import io
 from collections import defaultdict
 from dataclasses import dataclass, field
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
 
@@ -27,26 +27,53 @@ class ImportReport:
         return text
 
 
+COLUMNS = ["OPIS Truckstop ID", "Truckstop Name", "Address", "City", "State", "Retail Price"]
+
+
+def read_price_rows(fileobj):
+    """Parse the CSV, one row per station id, keeping the lowest price when an
+    id repeats. Raises ValueError saying what is wrong and where."""
+    text = fileobj.read()
+    if isinstance(text, bytes):
+        try:
+            text = text.decode("utf-8-sig")
+        except UnicodeDecodeError as exc:
+            raise ValueError("the file is not UTF-8; save it as CSV UTF-8 and try again") from exc
+
+    reader = csv.DictReader(io.StringIO(text))
+    missing = [c for c in COLUMNS if c not in (reader.fieldnames or [])]
+    if missing:
+        raise ValueError("missing columns: " + ", ".join(missing))
+
+    rows = {}
+    duplicates = 0
+    for row in reader:
+        line = reader.line_num
+        opis_id = (row["OPIS Truckstop ID"] or "").strip()
+        if not opis_id:
+            raise ValueError(f"row {line}: no OPIS Truckstop ID")
+        try:
+            price = Decimal((row["Retail Price"] or "").strip()).quantize(Decimal("0.001"))
+        except InvalidOperation:
+            price = None
+        if price is None or not price.is_finite() or not 0 < price < 100:
+            raise ValueError(f"row {line}: price {row['Retail Price']!r} is not a number")
+        row["price"] = price
+        if opis_id in rows:
+            duplicates += 1
+            if price >= rows[opis_id]["price"]:
+                continue
+        rows[opis_id] = row
+    return rows, duplicates
+
+
 def import_prices(fileobj, country, source, as_of, activate=True):
     """Load an OPIS-style CSV into a new price list.
 
     A station id can appear several times with different prices; the lowest
     one is kept. Stations get their town's coordinates.
     """
-    text = fileobj.read()
-    if isinstance(text, bytes):
-        text = text.decode("utf-8-sig")
-
-    rows = {}
-    duplicates = 0
-    for row in csv.DictReader(io.StringIO(text)):
-        opis_id = row["OPIS Truckstop ID"].strip()
-        row["price"] = Decimal(row["Retail Price"].strip()).quantize(Decimal("0.001"))
-        if opis_id in rows:
-            duplicates += 1
-            if row["price"] >= rows[opis_id]["price"]:
-                continue
-        rows[opis_id] = row
+    rows, duplicates = read_price_rows(fileobj)
 
     cities = {(c.name.lower(), c.state): c for c in City.objects.filter(country=country)}
     existing = {s.opis_id: s for s in Station.objects.filter(country=country)}

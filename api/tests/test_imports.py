@@ -112,3 +112,48 @@ def test_admin_upload_imports_file(us, admin_client):
     assert active_price_list("US").prices.count() == 8
     messages = [str(m) for m in response.context["messages"]]
     assert any("8 prices" in m for m in messages)
+
+
+@pytest.mark.parametrize(
+    "line,problem",
+    [
+        ("51,BAD,x,Tomah,WI,1,N/A", "row 12: price"),
+        ("51,BAD,x,Tomah,WI,1,", "row 12: price"),
+    ],
+)
+def test_bad_price_names_the_row(us, line, problem):
+    import io
+
+    text = SMALL.read_text(encoding="utf-8").rstrip("\n") + "\n" + line + "\n"
+    with pytest.raises(ValueError, match=problem):
+        import_prices(io.StringIO(text), us, "bad", dt.date(2025, 11, 28))
+    assert PriceList.objects.count() == 0
+
+
+def test_missing_column_rejected(us):
+    import io
+
+    with pytest.raises(ValueError, match="Retail Price"):
+        import_prices(
+            io.StringIO("OPIS Truckstop ID,City,State\n1,Tomah,WI\n"), us, "x", dt.date.today()
+        )
+
+
+def test_non_utf8_file_rejected(us):
+    import io
+
+    with pytest.raises(ValueError, match="UTF-8"):
+        import_prices(io.BytesIO("City\nMontr\xe9al\n".encode("cp1252")), us, "x", dt.date.today())
+
+
+def test_admin_rejects_bad_file_with_form_error(us, admin_client):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    bad = SimpleUploadedFile("p.csv", b"OPIS Truckstop ID,City,State\n1,Tomah,WI\n")
+    response = admin_client.post(
+        "/admin/planner/pricelist/add/",
+        {"country": "US", "source": "x", "as_of": "2025-11-28", "file": bad},
+    )
+    assert response.status_code == 200
+    assert "Retail Price" in str(response.context["adminform"].form.errors)
+    assert PriceList.objects.count() == 0

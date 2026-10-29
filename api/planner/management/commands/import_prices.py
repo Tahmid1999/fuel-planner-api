@@ -1,6 +1,6 @@
 import datetime as dt
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from planner.importers import import_prices
 from planner.models import Country
@@ -18,10 +18,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **opts):
         country = Country.objects.get(code=opts["country"])
-        with open(opts["csv"], encoding="utf-8-sig") as f:
-            report = import_prices(
-                f, country, opts["source"], opts["as_of"], activate=not opts["inactive"]
-            )
+        with open(opts["csv"], "rb") as f:
+            try:
+                report = import_prices(
+                    f, country, opts["source"], opts["as_of"], activate=not opts["inactive"]
+                )
+            except ValueError as exc:
+                raise CommandError(str(exc)) from exc
         self.stdout.write(report.summary())
         for label in report.skipped_unknown_city:
             self.stdout.write(f"  no city: {label}")
