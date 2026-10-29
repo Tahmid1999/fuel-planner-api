@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 from django.core.management.utils import get_random_secret_key
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -13,9 +14,13 @@ def env_list(name, default=""):
 
 DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1"
 
-# Without DJANGO_SECRET_KEY every start gets a new key, so admin sessions end on
-# restart. Fine locally and in tests; production sets the variable.
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or get_random_secret_key()
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if not DEBUG:
+        # A random key per process would log admins out on every restart and
+        # differ between gunicorn workers.
+        raise ImproperlyConfigured("set DJANGO_SECRET_KEY, or DJANGO_DEBUG=1 for local work")
+    SECRET_KEY = get_random_secret_key()
 
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS")
