@@ -40,6 +40,9 @@ async function retype(user: ReturnType<typeof userEvent.setup>, label: string, v
   await user.type(field(label), value);
 }
 
+// antd forms are slow in jsdom, and slower again on a ci runner
+jest.setTimeout(60_000);
+
 beforeEach(() => {
   create.mockReset();
   push.mockReset();
@@ -64,7 +67,9 @@ it("blocks a city typed but not picked", async () => {
   const { user, submit } = setup({ ...trip });
   const to = screen.getAllByRole("combobox")[1];
   await user.clear(to);
-  await user.type(to, "chicago");
+  // one input event instead of seven keystrokes; typing timed out on ci
+  await user.click(to);
+  await user.paste("chicago");
   await submit();
   expect(await screen.findByText("pick a city from the list")).toBeInTheDocument();
   expect(create).not.toHaveBeenCalled();
