@@ -26,6 +26,11 @@ ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS")
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
 
+# Render sets this on every web service, so its own host needs no copying
+if render_host := os.environ.get("RENDER_EXTERNAL_HOSTNAME"):
+    ALLOWED_HOSTS.append(render_host)
+    CSRF_TRUSTED_ORIGINS.append(f"https://{render_host}")
+
 # HTTPS-only settings, on by default outside DEBUG. Docker Compose turns them
 # off because it serves production settings over plain http on localhost.
 if os.environ.get("DJANGO_SECURE", "0" if DEBUG else "1") == "1":

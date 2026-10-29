@@ -90,3 +90,22 @@ def test_secure_off_allows_plain_http():
         text=True,
     )
     assert result.stdout.strip() == "False", result.stderr
+
+
+def test_render_hostname_is_trusted():
+    # Render sets this on every web service; no hand-copied host needed
+    code = (
+        "import django; django.setup(); from django.conf import settings; "
+        "print(settings.ALLOWED_HOSTS, settings.CSRF_TRUSTED_ORIGINS)"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=API,
+        env=settings_env(
+            DJANGO_SECRET_KEY="x" * 50, RENDER_EXTERNAL_HOSTNAME="fuel-planner-api.onrender.com"
+        ),
+        capture_output=True,
+        text=True,
+    )
+    assert "'fuel-planner-api.onrender.com'" in result.stdout, result.stderr
+    assert "'https://fuel-planner-api.onrender.com'" in result.stdout
