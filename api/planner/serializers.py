@@ -1,3 +1,5 @@
+import math
+
 from rest_framework import serializers
 
 from . import defaults
@@ -12,16 +14,23 @@ class CitySerializer(serializers.ModelSerializer):
         fields = ["id", "name", "state", "label"]
 
 
+class FiniteFloatField(serializers.FloatField):
+    # FloatField takes "nan", and NaN passes every min/max check.
+    def to_internal_value(self, data):
+        value = super().to_internal_value(data)
+        if not math.isfinite(value):
+            raise serializers.ValidationError("A valid number is required.")
+        return value
+
+
 class PlanRequestSerializer(serializers.Serializer):
     from_city = serializers.PrimaryKeyRelatedField(queryset=City.objects.filter(country_id="US"))
     to_city = serializers.PrimaryKeyRelatedField(queryset=City.objects.filter(country_id="US"))
-    mpg = serializers.FloatField(min_value=3, max_value=15, default=defaults.MPG)
-    tank_gal = serializers.FloatField(min_value=20, max_value=400, default=defaults.TANK_GAL)
-    start_pct = serializers.FloatField(min_value=0, max_value=100, default=defaults.START_PCT)
-    reserve_pct = serializers.FloatField(min_value=0, default=defaults.RESERVE_PCT)
-    max_detour_mi = serializers.FloatField(
-        min_value=0, max_value=10, default=defaults.MAX_DETOUR_MI
-    )
+    mpg = FiniteFloatField(min_value=3, max_value=15, default=defaults.MPG)
+    tank_gal = FiniteFloatField(min_value=20, max_value=400, default=defaults.TANK_GAL)
+    start_pct = FiniteFloatField(min_value=0, max_value=100, default=defaults.START_PCT)
+    reserve_pct = FiniteFloatField(min_value=0, default=defaults.RESERVE_PCT)
+    max_detour_mi = FiniteFloatField(min_value=0, max_value=10, default=defaults.MAX_DETOUR_MI)
 
     def validate_reserve_pct(self, value):
         if value >= 50:
@@ -34,6 +43,17 @@ class PlanRequestSerializer(serializers.Serializer):
         if data["start_pct"] <= data["reserve_pct"]:
             raise serializers.ValidationError(
                 {"start_pct": "The tank has to start above the reserve."}
+            )
+        # Detour is only a filter, so the plan can reach an exit with just the
+        # reserve left; the reserve has to cover the trip off the road and back.
+        reserve_gal = data["tank_gal"] * data["reserve_pct"] / 100
+        detour_gal = 2 * data["max_detour_mi"] / data["mpg"]
+        if reserve_gal < detour_gal:
+            raise serializers.ValidationError(
+                {
+                    "reserve_pct": f"Too small for a {data['max_detour_mi']:g} mile detour: "
+                    f"keep at least {detour_gal:.1f} gallons."
+                }
             )
         return data
 
@@ -99,11 +119,11 @@ class PricesUsedSerializer(serializers.Serializer):
 
 
 class InputsSerializer(serializers.Serializer):
-    mpg = serializers.FloatField()
-    tank_gal = serializers.FloatField()
-    start_pct = serializers.FloatField()
-    reserve_pct = serializers.FloatField()
-    max_detour_mi = serializers.FloatField()
+    mpg = FiniteFloatField()
+    tank_gal = FiniteFloatField()
+    start_pct = FiniteFloatField()
+    reserve_pct = FiniteFloatField()
+    max_detour_mi = FiniteFloatField()
 
 
 class PlanDocumentSerializer(serializers.Serializer):

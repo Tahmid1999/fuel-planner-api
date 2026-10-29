@@ -25,6 +25,10 @@ class RoutingUnavailable(Exception):
     pass
 
 
+class NoRoute(Exception):
+    """OSRM found no road between the two places (Hawaii to Denver)."""
+
+
 def get_route(from_city, to_city):
     cached = RouteCache.objects.filter(from_city=from_city, to_city=to_city).first()
     if cached:
@@ -54,9 +58,14 @@ def _fetch(from_city, to_city):
         )
     except requests.RequestException as exc:
         raise RoutingUnavailable(str(exc)) from exc
+    try:
+        data = response.json()
+    except ValueError:
+        data = {}
+    if data.get("code") == "NoRoute":
+        raise NoRoute()
     if response.status_code != 200:
         raise RoutingUnavailable(f"OSRM answered {response.status_code}")
-    data = response.json()
     if data.get("code") != "Ok" or not data.get("routes"):
         raise RoutingUnavailable(data.get("message") or data.get("code") or "no route")
 

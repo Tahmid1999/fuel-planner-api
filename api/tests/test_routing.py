@@ -3,7 +3,7 @@ import requests
 
 from planner import routing
 from planner.models import City, RouteCache
-from planner.routing import RoutingUnavailable, get_route
+from planner.routing import NoRoute, RoutingUnavailable, get_route
 
 pytestmark = pytest.mark.django_db
 
@@ -97,7 +97,27 @@ def test_http_error_raises_unavailable(calls, pair):
 
 
 def test_non_ok_code_raises_unavailable(calls, pair):
-    calls.response = lambda url, kwargs: FakeResponse({"code": "NoRoute", "routes": []})
+    calls.response = lambda url, kwargs: FakeResponse({"code": "InvalidQuery", "routes": []})
     with pytest.raises(RoutingUnavailable):
+        get_route(*pair)
+    assert RouteCache.objects.count() == 0
+
+
+def test_garbage_body_raises_unavailable(calls, pair):
+    class Garbage:
+        status_code = 200
+
+        def json(self):
+            raise requests.JSONDecodeError("Expecting value", "<html>", 0)
+
+    calls.response = lambda url, kwargs: Garbage()
+    with pytest.raises(RoutingUnavailable):
+        get_route(*pair)
+
+
+def test_no_route_is_not_a_server_outage(calls, pair):
+    body = {"code": "NoRoute", "message": "Impossible route between points"}
+    calls.response = lambda url, kwargs: FakeResponse(body, status=400)
+    with pytest.raises(NoRoute):
         get_route(*pair)
     assert RouteCache.objects.count() == 0

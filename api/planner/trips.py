@@ -23,8 +23,8 @@ def vehicle_from(inputs):
 
 
 def make_plan(from_city, to_city, inputs):
-    """Raises fuel.Unreachable, routing.RoutingUnavailable or NoPrices; saves
-    nothing unless a plan comes out."""
+    """Raises fuel.Unreachable, routing.NoRoute, routing.RoutingUnavailable or
+    NoPrices; saves nothing unless a plan comes out."""
     price_list = active_price_list(from_city.country_id)
     if price_list is None:
         raise NoPrices()

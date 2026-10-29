@@ -251,3 +251,43 @@ def test_schema_has_no_warnings(tmp_path):
     from django.core.management import call_command
 
     call_command("spectacular", "--file", str(tmp_path / "s.yml"), "--validate", "--fail-on-warn")
+
+
+@pytest.mark.parametrize("value", ["nan", "inf", "-inf"])
+def test_non_finite_numbers_rejected_400(client, world, value):
+    _, west, east = world
+    response = post_plan(client, west, east, mpg=value)
+    assert response.status_code == 400
+    assert "mpg" in response.json()
+
+
+def test_reserve_must_cover_the_detour_400(client, world):
+    # 3 mpg, 10 miles off the road and back is 6.7 gallons; a 0% reserve could
+    # reach the exit empty and never make it to the pump.
+    _, west, east = world
+    response = post_plan(client, west, east, mpg=3, reserve_pct=0, max_detour_mi=10)
+    assert response.status_code == 400
+    assert "reserve_pct" in response.json()
+
+
+def test_reserve_zero_fine_without_detour(client, osrm, world):
+    us, west, east = world
+    load_prices(us)
+    response = post_plan(client, west, east, reserve_pct=0, max_detour_mi=0)
+    assert response.status_code == 201
+
+
+def test_no_road_between_cities_returns_422(client, monkeypatch, world):
+    us, west, east = world
+    load_prices(us)
+
+    class NoRoute:
+        status_code = 400
+
+        def json(self):
+            return {"code": "NoRoute", "message": "Impossible route between points"}
+
+    monkeypatch.setattr(routing.requests, "get", lambda url, **kwargs: NoRoute())
+    response = post_plan(client, west, east)
+    assert response.status_code == 422
+    assert response.json() == {"detail": "no road route between these cities"}

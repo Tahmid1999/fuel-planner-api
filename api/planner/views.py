@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from .fuel import Unreachable
 from .importers import active_price_list
 from .models import City, TripPlan
-from .routing import RoutingUnavailable
+from .routing import NoRoute, RoutingUnavailable
 from .serializers import (
     ActivePricesSerializer,
     CitySerializer,
@@ -74,6 +74,11 @@ class PlanCreateView(APIView):
                 f"and mile {exc.to_mile:.1f} ({gap:.1f} mi)"
             )
             return Response({"detail": detail}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        except NoRoute:
+            return Response(
+                {"detail": "no road route between these cities"},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
         except RoutingUnavailable:
             return Response(
                 {"detail": "routing service unavailable, try again shortly"},
