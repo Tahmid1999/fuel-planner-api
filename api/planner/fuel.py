@@ -127,3 +127,67 @@ def _burn(tank, volume):
         else:
             tank[0][0] -= volume
             volume = 0.0
+
+
+def plan_baseline(candidates, route_miles, v, threshold):
+    """The habit the savings line is measured against: drive on, and fill to
+    full at the first station where the next leg would leave less than
+    `threshold` (a volume) in the tank.
+    """
+    stations = sorted(candidates, key=lambda c: c.mile)
+    points = [c.mile for c in stations] + [route_miles]
+    floor = max(threshold, v.reserve)
+
+    fuel = v.start - v.reserve
+    fuel = _drive(fuel, 0.0, points[0], v.mpg)
+    stops = []
+    for i, station in enumerate(stations):
+        after_leg = fuel + v.reserve - (points[i + 1] - station.mile) / v.mpg
+        if after_leg < floor - EPS:
+            buy = v.tank - v.reserve - fuel
+            if buy > EPS:
+                stops.append(Stop(station, buy, fuel + v.reserve))
+                fuel += buy
+        fuel = _drive(fuel, station.mile, points[i + 1], v.mpg)
+
+    return _priced(stops, route_miles, v)
+
+
+def plan_old_rule(candidates, route_miles, v):
+    """The take-home's choice of stops, re-costed like the other two.
+
+    The old code jumped to the cheapest station within range until the finish
+    was in range. Here it starts with the same tank and reserve, and buys just
+    enough at each chosen stop to reach the next one, so only the choice of
+    stops differs from the other plans.
+    """
+    stations = sorted(candidates, key=lambda c: c.mile)
+    reach = (v.tank - v.reserve) * v.mpg
+
+    chosen = []
+    mile = 0.0
+    in_range = (v.start - v.reserve) * v.mpg
+    while mile + in_range < route_miles - EPS:
+        window = [c for c in stations if mile < c.mile <= mile + in_range + EPS]
+        if not window:
+            ahead = [c.mile for c in stations if c.mile > mile]
+            raise Unreachable(mile, ahead[0] if ahead else route_miles)
+        best = min(window, key=lambda c: c.price)
+        chosen.append(best)
+        mile = best.mile
+        in_range = reach
+
+    fuel = v.start - v.reserve
+    mile = 0.0
+    stops = []
+    for i, station in enumerate(chosen):
+        fuel = _drive(fuel, mile, station.mile, v.mpg)
+        mile = station.mile
+        next_mile = chosen[i + 1].mile if i + 1 < len(chosen) else route_miles
+        buy = max(0.0, (next_mile - mile) / v.mpg - fuel)
+        if buy > EPS:
+            stops.append(Stop(station, buy, fuel + v.reserve))
+            fuel += buy
+    _drive(fuel, mile, route_miles, v.mpg)
+
+    return _priced(stops, route_miles, v)
