@@ -31,8 +31,13 @@ class Corridor:
         self.points = shapely.points(xs, ys)
         self.tree = STRtree(self.points)
 
-    def candidates(self, route, max_detour_mi):
-        """route: [(lng, lat)] from start to finish."""
+    def candidates(self, route, max_detour_mi, route_mi=None):
+        """route: [(lng, lat)] from start to finish.
+
+        route_mi is the road distance from the router. The drawn line is
+        simplified and a little shorter, so when given, mile markers are
+        stretched to it; otherwise they are miles along the line.
+        """
         lngs = [p[0] for p in route]
         lats = [p[1] for p in route]
         xs, ys = _to_mercator.transform(lngs, lats)
@@ -46,6 +51,8 @@ class Corridor:
         ]
         run_merc = [0.0, *accumulate(pieces)]
         run_mi = [0.0, *accumulate(p * c / MILE_M for p, c in zip(pieces, cos, strict=True))]
+        if route_mi and run_mi[-1]:
+            run_mi = [m * route_mi / run_mi[-1] for m in run_mi]
 
         widest = max_detour_mi * MILE_M / min(math.cos(math.radians(lat)) for lat in lats)
         found = []

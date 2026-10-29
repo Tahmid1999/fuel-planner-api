@@ -70,3 +70,10 @@ def test_corridor_for_is_cached_per_price_list(us):
     with SMALL.open(encoding="utf-8") as f:
         second = import_prices(f, us, "OPIS sample", dt.date(2025, 12, 5)).price_list
     assert corridor_for(second) is not corridor
+
+
+def test_mile_marker_scaled_to_road_distance():
+    # OSRM's road distance is longer than the simplified line; stations are
+    # placed by their share of the line.
+    [c] = Corridor([("a", 40.0, -99.0, 3.1)]).candidates(ROUTE, 3, route_mi=400)
+    assert c.mile == pytest.approx(100, rel=1e-6)
