@@ -5,9 +5,10 @@ import { useEffect, useRef, useState } from "react";
 
 import { type City, type CityChoice, searchCities } from "@/lib/api";
 
+// value and onChange come from the antd Form.Item wrapping it.
 type Props = {
-  value: CityChoice | null;
-  onChange: (c: CityChoice | null) => void;
+  value?: CityChoice | null;
+  onChange?: (c: CityChoice | null) => void;
   placeholder: string;
   status?: "error";
   id?: string;
@@ -35,7 +36,7 @@ export default function CityInput({ value, onChange, placeholder, status, id }: 
 
   function onSearch(q: string) {
     setText(q);
-    if (value) onChange(null);
+    if (value) onChange?.(null);
     clearTimeout(timer.current);
     latest.current?.abort();
     setNoMatch(false);
@@ -62,7 +63,7 @@ export default function CityInput({ value, onChange, placeholder, status, id }: 
     const city = options.find((c) => String(c.id) === picked);
     if (!city) return;
     setText(city.label);
-    onChange({ id: city.id, label: city.label });
+    onChange?.({ id: city.id, label: city.label });
   }
 
   return (
