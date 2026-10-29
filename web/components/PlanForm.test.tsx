@@ -137,3 +137,22 @@ it("a timeout says so and lets the driver try again", async () => {
   await submit();
   expect(create).toHaveBeenCalledTimes(2);
 });
+
+it("an error goes away once the input that caused it is fixed elsewhere", async () => {
+  create.mockReturnValue(new Promise(() => {}));
+  const { user, submit } = setup(trip);
+  await retype(user, "Tank now (%)", "10");
+  await submit();
+  expect(await screen.findByText("above the reserve, at most 100")).toBeInTheDocument();
+  await openLimits(user);
+  await retype(user, "Keep in reserve (%)", "5");
+  await submit();
+  await waitFor(() => expect(create).toHaveBeenCalled());
+  // the message fades out (an animation jsdom never finishes); the field's
+  // error state is what counts
+  await waitFor(() =>
+    expect(field("Tank now (%)").closest(".ant-form-item")).not.toHaveClass(
+      "ant-form-item-has-error",
+    ),
+  );
+}, 60_000);

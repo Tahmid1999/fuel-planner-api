@@ -45,6 +45,12 @@ export default function PlanForm({ initial }: { initial?: Initial }) {
 
   async function submit(values: Values) {
     setError(null);
+    // antd only re-validates fields that have rules, and these have none, so
+    // errors from the last attempt would otherwise stay up
+    const shown = form.getFieldsError().filter((f) => f.errors.length);
+    if (shown.length) {
+      form.setFields(shown.map((f) => ({ name: f.name[0] as keyof Values, errors: [] })));
+    }
     const inputs: PlanInputs = {
       mpg: values.mpg,
       tank_gal: values.tank_gal,
