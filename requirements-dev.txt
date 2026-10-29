@@ -1,5 +1,0 @@
--r requirements.txt
-uszipcode==1.0.1
-SQLAlchemy<2
-sqlalchemy-mate<2
-

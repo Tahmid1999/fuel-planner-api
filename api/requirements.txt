@@ -1,0 +1,10 @@
+Django==5.2.8
+djangorestframework==3.15.2
+drf-spectacular==0.28.0
+dj-database-url==2.3.0
+django-cors-headers==4.6.0
+psycopg[binary]==3.2.3
+gunicorn==23.0.0
+requests==2.32.3
+pyproj==3.6.1
+shapely==2.0.4
