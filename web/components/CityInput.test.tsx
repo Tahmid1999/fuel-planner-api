@@ -1,11 +1,11 @@
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { searchCities } from "@/lib/api";
+import { ApiError, searchCities } from "@/lib/api";
 
 import CityInput from "./CityInput";
 
-jest.mock("@/lib/api", () => ({ searchCities: jest.fn() }));
+jest.mock("@/lib/api", () => ({ ...jest.requireActual("@/lib/api"), searchCities: jest.fn() }));
 const search = searchCities as jest.Mock;
 
 const chicago = { id: 1, name: "Chicago", state: "IL", label: "Chicago, IL" };
@@ -83,4 +83,23 @@ it("empty answer shows the no-match line", async () => {
   await user.type(box, "zzq");
   await settle();
   expect(await screen.findByText("no US city starts with that")).toBeInTheDocument();
+});
+
+it("a slow search says the server is waking", async () => {
+  search.mockReturnValue(new Promise(() => {}));
+  const { user, box } = setup();
+  await user.type(box, "chi");
+  await settle();
+  await act(async () => {
+    jest.advanceTimersByTime(5000);
+  });
+  expect(await screen.findByText(/waking the server/)).toBeInTheDocument();
+});
+
+it("a failed search says why", async () => {
+  search.mockRejectedValue(new ApiError(0, "can't reach the server"));
+  const { user, box } = setup();
+  await user.type(box, "chi");
+  await settle();
+  expect(await screen.findByText("can't reach the server")).toBeInTheDocument();
 });
