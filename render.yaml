@@ -5,7 +5,8 @@ services:
     name: fuel-planner-api
     runtime: docker
     plan: free
-    region: oregon
+    # Neon is in AWS us-east-1; Render can't move a service later
+    region: virginia
     dockerContext: ./api
     dockerfilePath: ./api/Dockerfile
     # liveness only; /api/health/ also checks the database
