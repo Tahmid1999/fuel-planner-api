@@ -16,17 +16,9 @@ jest.mock("maplibre-gl", () => {
     fitBounds: jest.fn(),
     remove: jest.fn(),
   };
-  class Marker {
-    setLngLat() {
-      return this;
-    }
-    addTo() {
-      return this;
-    }
-  }
   return {
     __esModule: true,
-    default: { Map: jest.fn(() => map), Marker },
+    default: { Map: jest.fn(() => map) },
   };
 });
 
@@ -58,6 +50,15 @@ it("adds the route and stops sources with the given data", () => {
   expect(sources.route.data.geometry.coordinates).toBe(doc.route.geometry.coordinates);
   expect(sources.stops.data.features).toHaveLength(3);
   expect(sources.stops.data.features[0].properties).toEqual({ n: 1, label: "PWI #168" });
+});
+
+it("draws A and B under the stops, so a stop next to either one stays visible", () => {
+  draw();
+  const sources = Object.fromEntries(map().addSource.mock.calls);
+  const labels = sources.ends.data.features.map((f: { properties: { label: string } }) => f.properties.label);
+  expect(labels).toEqual(["A", "B"]);
+  const layers = map().addLayer.mock.calls.map(([layer]: [{ id: string }]) => layer.id);
+  expect(layers.indexOf("end-labels")).toBeLessThan(layers.indexOf("stops"));
 });
 
 it("fits the route bounds", () => {

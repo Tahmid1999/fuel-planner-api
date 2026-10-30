@@ -25,9 +25,15 @@ export default function StopTable({ part }: { part: PlanPart }) {
       render: (_, s) => (
         <>
           <div>{s.name}</div>
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            {/* on a phone the mile column is hidden, so it rides along here */}
-            {!wide && <span className="num">mile {s.mile.toFixed(1)} · </span>}
+          {/* antd's break-word lets the column shrink until town names split mid-word */}
+          <Typography.Text type="secondary" style={{ fontSize: 12, wordBreak: "normal" }}>
+            {/* on a phone the mile column is hidden, so it rides along here, on its own
+                line: inline, its no-wrap width pushed the Cost column off the screen */}
+            {!wide && (
+              <span className="num" style={{ display: "block" }}>
+                mile {s.mile.toFixed(1)}
+              </span>
+            )}
             {s.city}, {s.state} · {s.address}
           </Typography.Text>
         </>

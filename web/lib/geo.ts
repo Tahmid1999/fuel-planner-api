@@ -1,4 +1,4 @@
-import type { Stop } from "./api";
+import type { Place, Stop } from "./api";
 
 type LngLat = [number, number];
 
@@ -9,6 +9,15 @@ export function routeBounds(coords: LngLat[]): [LngLat, LngLat] {
     [Math.min(...lngs), Math.min(...lats)],
     [Math.max(...lngs), Math.max(...lats)],
   ];
+}
+
+export function endsGeoJSON(from: Place, to: Place) {
+  const end = (p: Place, label: string) => ({
+    type: "Feature" as const,
+    properties: { label },
+    geometry: { type: "Point" as const, coordinates: [p.lng, p.lat] as LngLat },
+  });
+  return { type: "FeatureCollection" as const, features: [end(from, "A"), end(to, "B")] };
 }
 
 export function stopsGeoJSON(stops: Stop[]) {
