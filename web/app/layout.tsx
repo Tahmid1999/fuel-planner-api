@@ -6,7 +6,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Fuel planner",
+  title: "Haulfill",
   description: "Cheapest diesel stops for a US truck trip.",
 };
 

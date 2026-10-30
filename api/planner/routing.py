@@ -8,7 +8,7 @@ from .models import RouteCache
 
 OSRM_URL = "https://router.project-osrm.org/route/v1/driving/"
 # The public OSRM server asks for an identifying User-Agent and light use.
-USER_AGENT = "fuel-planner (github.com/Tahmid1999/fuel-planner-api)"
+USER_AGENT = "haulfill (github.com/Tahmid1999/haulfill)"
 MILE_M = 1609.344
 # About 50 m; a cross-country route drops from tens of thousands of points to
 # a few thousand, which is plenty for the map and the station search.

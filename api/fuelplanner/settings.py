@@ -137,7 +137,7 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Fuel planner API",
+    "TITLE": "Haulfill API",
     "DESCRIPTION": "Cheapest fuel stops for a US truck trip, against a fill-at-a-quarter baseline.",
     "VERSION": "1.0.0",
 }

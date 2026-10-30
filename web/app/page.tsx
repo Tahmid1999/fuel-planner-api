@@ -59,7 +59,7 @@ export default function Home() {
   return (
     <main>
       <Typography.Title level={4} style={{ marginTop: 4 }}>
-        Fuel planner
+        Haulfill
       </Typography.Title>
       <Typography.Paragraph type="secondary" style={{ marginTop: -8 }}>
         Cheapest diesel stops between two US cities, for your truck and tank.
