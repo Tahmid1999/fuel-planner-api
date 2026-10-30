@@ -65,7 +65,7 @@ jobs:
       - run: curl -fsS http://localhost:8000/api/health/
       - run: curl -fsS http://localhost:8000/api/prices/active/ | grep -q '"station_count":6622'
       - run: curl -fsS -o /dev/null http://localhost:8000/static/admin/css/base.css
-      - run: curl -fsS http://localhost:3300 | grep -q "Fuel planner"
+      - run: curl -fsS http://localhost:3300 | grep -q "Haulfill"
       - run: docker compose logs api | grep -q "6622 prices"
       - if: failure()
         run: docker compose logs

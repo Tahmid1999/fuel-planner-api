@@ -59,7 +59,7 @@ def test_user_agent_and_timeout_sent(calls, pair):
     get_route(*pair)
     url, kwargs = calls[0]
     assert url.startswith("https://router.project-osrm.org/route/v1/driving/")
-    assert kwargs["headers"]["User-Agent"].startswith("fuel-planner (")
+    assert kwargs["headers"]["User-Agent"].startswith("haulfill (")
     assert kwargs["timeout"] == 20
 
 

@@ -1,8 +1,8 @@
-# Fuel planner
+# Haulfill
 
 Cheapest diesel stops between two US cities, for one truck and its tank.
 
-Live: https://fuel-planner-omega.vercel.app
+Live: https://haulfill.vercel.app
 
 The API runs on Render's free plan and sleeps after 15 idle minutes. If nobody has used it for a while, the first plan takes about a minute while it wakes up; the page tells you when that's happening.
 
@@ -43,6 +43,10 @@ A plan on a route that's already cached comes back in 0.6 to 0.9 s from my machi
 ## Where this came from
 
 This started as a take-home test in Dec 2025: a Django endpoint that took two cities and returned fuel stops and a Folium map. Coming back to it, I found my stop-picking rule wasn't the cheapest, and it priced the first tank at whichever station was nearest the start, even one 250 miles away, which isn't fuel a driver can actually buy. I replaced the rule with one I could prove, moved stations, cities and saved plans into Postgres, and built a mobile-first front end for the person who would actually use it: an owner-operator paying for their own diesel. The old code is still in the history.
+
+## Similar tools
+
+Truckers already have fuel tools: [TruckMaster Fuel Finder](https://truckmaster.com/fuel-finder), [ProMiles Fuel Finder](https://promiles.com/fuel-finder), Trucker Tools' route and fuel optimizer, and Mudflap and Trucker Path for discounted prices. They have live prices and real station locations, which this doesn't. This is a portfolio project; the parts I care about are the planning rule, checked against a brute-force solver, and a savings number you can check.
 
 ## Run it
 

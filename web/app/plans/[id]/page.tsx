@@ -54,7 +54,7 @@ export default function PlanPage() {
   return (
     <main>
       <div style={{ marginBottom: 8 }}>
-        <Link href="/">Fuel planner</Link>
+        <Link href="/">Haulfill</Link>
       </div>
       {body}
     </main>

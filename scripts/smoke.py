@@ -91,13 +91,13 @@ def run(api, web, wait):
     check("cors", allowed == web, f"{web} not allowed")
 
     status, _, text = call("GET", f"{web}/")
-    check("web home", status == 200 and "Fuel planner" in text, f"{status}")
+    check("web home", status == 200 and "Haulfill" in text, f"{status}")
     status, _, _ = call("GET", f"{web}/plans/{doc['id']}")
     check("web plan page", status == 200, f"{status}")
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Check a deployed fuel planner.")
+    parser = argparse.ArgumentParser(description="Check a deployed Haulfill.")
     parser.add_argument("--api", required=True)
     parser.add_argument("--web")
     parser.add_argument("--wait", type=int, default=120, help="seconds to wait for health")
