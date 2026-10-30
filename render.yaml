@@ -18,3 +18,6 @@ services:
         generateValue: true
       - key: DATABASE_URL
         sync: false
+      # the web app on Vercel calls the API straight from the browser
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://fuel-planner-omega.vercel.app
