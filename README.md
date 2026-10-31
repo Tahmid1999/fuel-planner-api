@@ -6,6 +6,10 @@ Live: https://haulfill.vercel.app
 
 The API runs on Render's free plan and sleeps after 15 idle minutes. If nobody has used it for a while, the first plan takes about a minute while it wakes up; the page tells you when that's happening.
 
+https://github.com/user-attachments/assets/eb0acda3-c80f-4746-9f19-c46cb1fe8ff4
+
+The explainer (2:36, captioned, also at [docs/haulfill-explainer.mp4](docs/haulfill-explainer.mp4)) plans one trip, Austin to Chicago, then goes through each part behind it. It is drawn, not a screen recording: the phone screens in it are screenshots of the app at phone size, and the numbers come from the code and the measured table below. The voice is a stock ElevenLabs voice.
+
 ## What it does
 
 You pick From and To, enter your truck's mpg, tank size and how full it is now. You get the route on a map, the stops in order with the price, how many gallons to buy at each and what that costs, and the same trip priced under the "fill up at a quarter tank" habit, so you can see what the plan saves. Every plan gets a link you can reopen or send to your phone.
