@@ -4,7 +4,7 @@ import maplibregl from "maplibre-gl";
 import { useEffect, useRef } from "react";
 
 import type { Place, Stop } from "@/lib/api";
-import { routeBounds, stopsGeoJSON } from "@/lib/geo";
+import { endsGeoJSON, routeBounds, stopsGeoJSON } from "@/lib/geo";
 
 // Free, no key, no request limit; it asks for the credit line below.
 const STYLE = "https://tiles.openfreemap.org/styles/liberty";
@@ -20,7 +20,7 @@ export default function RouteMap({ route, stops, from, to }: Props) {
       container: box.current!,
       style: STYLE,
       // The credit goes under the map instead: on a phone MapLibre's box
-      // opens over the bottom of the map, where the start pin usually is.
+      // opens over the bottom of the map, where the start usually is.
       attributionControl: false,
       cooperativeGestures: true, // one finger scrolls the page on a phone, two move the map
     });
@@ -39,6 +39,27 @@ export default function RouteMap({ route, stops, from, to }: Props) {
         source: "route",
         layout: { "line-join": "round", "line-cap": "round" },
         paint: { "line-color": BLUE, "line-width": 4 },
+      });
+      // A and B are layers rather than HTML markers so they sit under the
+      // stops: the first stop is often a few miles from the start.
+      map.addSource("ends", { type: "geojson", data: endsGeoJSON(from, to) });
+      map.addLayer({
+        id: "ends",
+        type: "circle",
+        source: "ends",
+        paint: { "circle-radius": 10, "circle-color": "#262626" },
+      });
+      map.addLayer({
+        id: "end-labels",
+        type: "symbol",
+        source: "ends",
+        layout: {
+          "text-field": ["get", "label"],
+          "text-font": ["Noto Sans Bold"],
+          "text-size": 11,
+          "text-allow-overlap": true,
+        },
+        paint: { "text-color": "#fff" },
       });
       map.addSource("stops", { type: "geojson", data: stopsGeoJSON(stops) });
       map.addLayer({
@@ -65,16 +86,6 @@ export default function RouteMap({ route, stops, from, to }: Props) {
         paint: { "text-color": BLUE },
       });
     });
-
-    for (const [place, label] of [
-      [from, "A"],
-      [to, "B"],
-    ] as const) {
-      const pin = document.createElement("div");
-      pin.className = "pin";
-      pin.textContent = label;
-      new maplibregl.Marker({ element: pin }).setLngLat([place.lng, place.lat]).addTo(map);
-    }
 
     return () => map.remove();
   }, [route, stops, from, to]);
